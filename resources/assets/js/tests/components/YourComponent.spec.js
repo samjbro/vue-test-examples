@@ -1,5 +1,5 @@
 import {shallow, mount} from 'vue-test-utils';
-import http from 'http';
+import {http} from '@/services';
 import sinon from 'sinon';
 require('chai').should();
 import YourComponent from '@/components/YourComponent';
@@ -32,10 +32,31 @@ describe('Your Component', () => {
         }).findAll('li.my-stub').should.have.lengthOf(5);
     });
 
-    it('gets google.com', () => {
+    it('disappears', () => {
+       const wrapper = shallow(YourComponent);
+       wrapper.contains('div.foo').should.be.true;
+       wrapper.find('button').trigger('click');
+       wrapper.contains('div.foo').should.be.false;
+    });
+
+    it('gets google.com and save analytics', () => {
        sinon.spy(http, 'get');
+       sinon.spy(http, 'post');
        const wrapper = shallow(YourComponent);
        wrapper.find('button').trigger('click');
+
        http.get.withArgs('http://www.google.com').calledOnce.should.be.true;
+       http.post.withArgs('http://www.analytics.com').calledOnce.should.be.true;
+       http.get.restore();
+       http.post.restore();
+    });
+
+    it('gets google.com', () => {
+       let mock = sinon.mock(http);
+       mock.expects('get').withArgs('http://www.google.com').once;
+       const wrapper = shallow(YourComponent);
+       wrapper.find('button').trigger('click');
+       mock.verify();
+       mock.restore();
     });
 });
